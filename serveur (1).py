@@ -110,16 +110,26 @@ else:
     print("Warning: no static/ directory found; serving files from the project root.")
 
 if __name__ == "__main__":
-    ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-    ssl_context.load_cert_chain("cert.pem", "key.pem")
+    import os
 
-    local_ip = "10.179.60.221"
+    # Railway injecte automatiquement la variable PORT
+    port = int(os.environ.get("PORT", 8443))
+
+    # SSL géré par Railway en production — désactivé ici
+    use_ssl = os.environ.get("USE_SSL", "false").lower() == "true"
+    ssl_context = None
+
+    if use_ssl:
+        ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+        ssl_context.load_cert_chain("cert.pem", "key.pem")
+
+    protocol = "https" if ssl_context else "http"
 
     print(f"\n{'='*55}")
-    print(f"  Serveur vidéoconférence HTTPS démarré !")
+    print(f"  Serveur vidéoconférence démarré !")
     print(f"{'='*55}")
-    print(f"  Local  : https://localhost:8443")
-    print(f"  Réseau : https://{local_ip}:8443")
+    print(f"  Local  : {protocol}://localhost:{port}")
+    print(f"  Railway gère le HTTPS automatiquement")
     print(f"{'='*55}\n")
 
-    web.run_app(app, host="0.0.0.0", port=8443, ssl_context=ssl_context, print=False)
+    web.run_app(app, host="0.0.0.0", port=port, ssl_context=ssl_context, print=False)
